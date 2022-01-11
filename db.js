@@ -25,7 +25,7 @@ db.seq_obj=seq_obj;
 db.Sequelize=Sequelize;
 db.seq_obj.sync(
 {
-	force=true;
+	force:true
 }).then(function()
 {
 	console.log("database created");

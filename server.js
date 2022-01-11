@@ -439,6 +439,7 @@ app.get('/',function(req,res)
 
 db.seq_obj.sync(
 {
+	
 
 }).then(function()
 {
