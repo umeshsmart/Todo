@@ -23,5 +23,16 @@ var db={};
 db.todo=seq_obj.import(__dirname+'/models/todo.js');
 db.seq_obj=seq_obj;
 db.Sequelize=Sequelize;
+db.seq_obj.sync(
+{
+	force:true
 
+}).then(function()
+{
+	app.listen(PORT,function()
+	{
+		console.log("Express listen on port started on port "+PORT+" !! ");
+	});
+
+})
 module.exports=db;
