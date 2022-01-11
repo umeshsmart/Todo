@@ -1,0 +1,22 @@
+module.exports=function(seq_obj,Sequelize)
+{
+	return seq_obj.define('todo',{
+		description:
+		{
+			type:Sequelize.STRING,
+			allowNull:false,
+			//validation
+			validate:
+			{
+				len:[1,250]
+				//notEmpty:true
+			}
+		},
+		completed:
+		{
+			type:Sequelize.BOOLEAN,
+			allowNull:false,
+			defaultValue:false
+		}
+	});
+}
