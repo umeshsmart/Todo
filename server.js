@@ -87,7 +87,26 @@ app.delete('/delete_todo_by_id/:id',function(req,res)
 	*/
 
 	//for database
-
+	db.todo.destroy(
+	{
+		where:
+		{
+			id:todo_id
+		}
+	}).then(function(row_deleted)
+	{
+		if(row_deleted===0)
+		{
+			res.status(404).json({"error":"No todo with id "+todo_id});		
+		}
+		else
+		{
+			res.status(200).json({"Status":"Row deleted"});
+		}
+	},function()
+	{
+		res.status(500).json({"error":"server error"});
+	});
 });	
 
 //update the todo
@@ -138,8 +157,56 @@ app.put('/update_todo_by_id/:id',function(req,res)
 	*/
 
 
-	//for database
+	//from database
+	//pick two column only data validation
+	var body=_.pick(req.body,'description','completed');
+	var validateattribute={};
+				
+	if(body.hasOwnProperty('completed')  && _.isBoolean(body.completed))
+	{						
+		validateattribute.completed=body.completed;
+	}
+	else if(body.hasOwnProperty('completed'))
+	{
+		return res.status(400).json({"error":"The complete type is not boolean"});
+	}
 
+
+	if(body.hasOwnProperty('description')  && _.isString(body.description) && body.description.trim().length>0)
+	{
+		validateattribute.description=body.description;
+	}
+	else if(nodebody.hasOwnProperty('description'))
+	{
+		return res.status(400).json({"error":"The description type is not string"});
+	}
+	else if(body.hasOwnProperty('description') && _.isString(body.description) && body.description.trim().length===0)
+	{
+		return res.status(400).json({"error":"The description string is empty"});	
+	}
+
+	db.todo.findById(todo_id).then(function(todo)
+	{
+		console.log('Display todo by id '+todo_id+'!!');
+		if(todo)
+		{
+			return todo.update(validateattribute);		
+		}
+		else
+		{
+			res.status(404).json({"error":"No todos with this id "+todo_id});
+		}			
+	},function(){
+		res.status(500).send();
+	}).then(function(todo)
+	{
+		res.json(todo.toJSON());
+	}).catch(function(e)
+	{
+		console.log(e);
+		res.status(500).json({"error":"Server error"});
+	});	
+	
 });
 
 
@@ -438,7 +505,7 @@ app.get('/',function(req,res)
 });
 
 db.seq_obj.sync(
-{	
+{
 }).then(function()
 {
 	app.listen(PORT,function()
