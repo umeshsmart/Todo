@@ -1,22 +1,22 @@
 var Sequelize =require('sequelize');
-var env=process.env.NODE_ENV || 'development';
+//var env=process.env.NODE_ENV || 'development';
 
 var seq_obj;
 
-if(env==='production')
-{
-	//console.log("Database URL : "+process.env.DATABASE_URL);
-	seq_obj=new Sequelize(process.env.DATABASE_URL,{
-	dialect:'postgres',	
-	});
-}
-else
-{
+// if(env==='production')
+// {
+// 	//console.log("Database URL : "+process.env.DATABASE_URL);
+// 	seq_obj=new Sequelize(process.env.DATABASE_URL,{
+// 	dialect:'postgres',	
+// 	});
+// }
+// else
+// {
 	seq_obj=new Sequelize(undefined,undefined,undefined,{
 	'dialect':'sqlite',
 	'storage':__dirname+'/data/database-todo.sqlite'
 	});
-}
+//}
 
 var db={};
 
