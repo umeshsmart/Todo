@@ -440,6 +440,7 @@ app.get('/',function(req,res)
 db.seq_obj.sync(
 {
 	force:true
+	
 }).then(function()
 {
 	app.listen(PORT,function()
