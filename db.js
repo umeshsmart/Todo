@@ -23,5 +23,11 @@ var db={};
 db.todo=seq_obj.import(__dirname+'/models/todo.js');
 db.seq_obj=seq_obj;
 db.Sequelize=Sequelize;
-
+db.seq_obj.sync(
+{
+	force=true;
+}).then(function()
+{
+	console.log("database created");
+});
 module.exports=db;
