@@ -190,7 +190,14 @@ app.put('/update_todo_by_id/:id',function(req,res)
 		console.log('Display todo by id '+todo_id+'!!');
 		if(todo)
 		{
-			return todo.update(validateattribute);		
+			todo.update(validateattribute).then(function(todo)
+			{
+				res.json(todo.toJSON());
+			}).catch(function(e)
+			{
+				console.log(e);
+				res.status(500).json({"error":"Server error"});
+			});			
 		}
 		else
 		{
@@ -198,14 +205,7 @@ app.put('/update_todo_by_id/:id',function(req,res)
 		}			
 	},function(){
 		res.status(500).send();
-	}).then(function(todo)
-	{
-		res.json(todo.toJSON());
-	}).catch(function(e)
-	{
-		console.log(e);
-		res.status(500).json({"error":"Server error"});
-	});	
+	})
 	
 });
 
