@@ -438,14 +438,11 @@ app.get('/',function(req,res)
 });
 
 db.seq_obj.sync(
-{
-	force:true
-
+{	
 }).then(function()
 {
 	app.listen(PORT,function()
 	{
 		console.log("Express listen on port started on port "+PORT+" !! ");
 	});
-
 })
