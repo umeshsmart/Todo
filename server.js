@@ -421,8 +421,7 @@ app.get('/todos_by_status/:status',function(req,res)
 		}
 	}
 	if(flag===true)
-	{
-		res.status(404).send();
+	{		res.status(404).send();
 	}
 	else
 	{
