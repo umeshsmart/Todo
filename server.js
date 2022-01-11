@@ -176,7 +176,7 @@ app.put('/update_todo_by_id/:id',function(req,res)
 	{
 		validateattribute.description=body.description;
 	}
-	else if(nodebody.hasOwnProperty('description'))
+	else if(body.hasOwnProperty('description'))
 	{
 		return res.status(400).json({"error":"The description type is not string"});
 	}
