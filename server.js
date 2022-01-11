@@ -101,6 +101,7 @@ app.delete('/delete_todo_by_id/:id',function(req,res)
 		}
 		else
 		{
+			console.log("Todo deleted of id  "+todo_id+"!!!! ");
 			res.status(200).json({"Status":"Row deleted"});
 		}
 	},function()
@@ -192,6 +193,8 @@ app.put('/update_todo_by_id/:id',function(req,res)
 		{
 			todo.update(validateattribute).then(function(todo)
 			{
+				console.log("Todo updated !!!! ");
+				console.log(todo.toJSON());
 				res.json(todo.toJSON());
 			}).catch(function(e)
 			{
