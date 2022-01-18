@@ -18,10 +18,18 @@ var seq_obj;
 	});
 //}
 
+
+//association
+
 var db={};
 
 db.todo=seq_obj.import(__dirname+'/models/todo.js');
 db.user=seq_obj.import(__dirname+'/models/user.js');
+db.token=seq_obj.import(__dirname+'/models/token.js');
 db.seq_obj=seq_obj;
 db.Sequelize=Sequelize;
+
+db.todo.belongsTo(db.user);
+db.user.hasMany(db.todo);
+
 module.exports=db;

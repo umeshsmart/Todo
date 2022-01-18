@@ -25,23 +25,45 @@ app.post('/user/login',function(req,res)
 	//Pick data which are needed avoid the extra data
 	var body=_.pick(req.body,'email','password');
 
+	var userInstance;
+
 	db.user.authenticate(body).then(function(user)
 	{
 		var token=user.generateToken('authentication');
-		if(token)
-		{
-			res.header('Auth',token).json(user.toPublicJSON());	
-		}
-		else
-		{
-			res.status(401).send();		
-		}		
-	},function(e)
+		userInstance=user;
+		return db.token.create({
+			token:token
+		});
+
+		// if(token)
+		// {
+		// 	res.header('Auth',token).json(user.toPublicJSON());	
+		// }
+		// else
+		// {
+		// 	res.status(401).send();		
+		// }		
+	}).then(function(token)
+	{
+		res.header('Auth',token.get('token')).json(userInstance.toPublicJSON());	
+	}).catch(function()
 	{
 		res.status(401).send();
 	});	
 });
 
+//delete for logout
+app.delete('/user/logout',middleware.requireAuthentication,function(req,res)
+{
+	req.token.destroy().then(function()
+	{
+		res.status(204).send();
+
+	}).catch(function()
+	{
+		res.status(500).send();
+	})
+});
 
 //create the new user
 app.post('/createuser',function(req,res)
@@ -92,7 +114,14 @@ app.post('/createtodos',middleware.requireAuthentication,function(req,res)
 	{
 		console.log('Todo created !!!');
 		console.log(todo.toJSON());		
-		res.json(todo);	
+		//res.json(todo);
+		req.user.addTodo(todo).then(function()
+		{
+			return todo.reload();
+		}).then(function(todo)
+		{
+			res.json(todo);
+		});	
 	}).catch(function(e)
 	{
 		console.log(e);
@@ -146,7 +175,8 @@ app.delete('/delete_todo_by_id/:id',middleware.requireAuthentication,function(re
 	{
 		where:
 		{
-			id:todo_id
+			id:todo_id,
+			userId:req.user.get('id')
 		}
 	}).then(function(row_deleted)
 	{
@@ -270,8 +300,15 @@ app.put('/update_todo_by_id/:id',middleware.requireAuthentication,function(req,r
 	{
 		return res.status(400).json({"error":"The description string is empty"});	
 	}
-
-	db.todo.findById(todo_id).then(function(todo)
+	
+	db.todo.findOne(
+		{
+			where:
+			{
+				id:todo_id,
+				userId:req.user.get('id')
+			}
+		}).then(function(todo)
 	{
 		console.log('Display todo by id '+todo_id+'!!');
 		if(todo)
@@ -369,7 +406,13 @@ app.get('/todos',middleware.requireAuthentication,function(req,res)
 
 	var res_todos=[];
 	//get all data from database
-	db.todo.findAll({}).then(function(todo)
+	db.todo.findAll(
+		{
+			where:
+			{
+				userId:req.user.get('id')
+			}
+		}).then(function(todo)
 	{
 		console.log('Display all todos');
 		if(todo.length>0)
@@ -436,7 +479,8 @@ app.get('/todos_by_id/:id',middleware.requireAuthentication,function(req,res)
 	({
 		where:
 		{
-			id:todo_id			
+			id:todo_id,
+			userId:req.user.get('id')
 		}
 	}).then(function(todo)
 	{
@@ -557,7 +601,8 @@ app.get('/todos_search_description',middleware.requireAuthentication,function(re
 				description:
 				{
 					$like:'%'+query_params.description+'%' //searching
-				}
+				},
+				userId:req.user.get('id')
 			}
 		}).then(function(todo)
 		{
@@ -607,7 +652,8 @@ app.get('/todos_by_status',middleware.requireAuthentication,function(req,res)
 		({
 			where:
 			{
-				completed:true			
+				completed:true,
+				userId:req.user.get('id')		
 			}
 		}).then(function(todo)
 		{
@@ -643,7 +689,8 @@ app.get('/todos_by_status',middleware.requireAuthentication,function(req,res)
 		({
 			where:
 			{
-				completed:false			
+				completed:false,
+				userId:req.user.get('id')
 			}
 		}).then(function(todo)
 		{
