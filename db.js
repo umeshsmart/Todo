@@ -21,6 +21,7 @@ var seq_obj;
 var db={};
 
 db.todo=seq_obj.import(__dirname+'/models/todo.js');
+db.user=seq_obj.import(__dirname+'/models/user.js');
 db.seq_obj=seq_obj;
 db.Sequelize=Sequelize;
 module.exports=db;

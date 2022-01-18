@@ -4,18 +4,66 @@ var app=express();
 var bodyParser =require('body-parser');
 var _ =require('underscore');
 var db=require('./db.js');
-
+var bcrypt=require('bcrypt');
 //set the port number
 var PORT=process.env.PORT || 3000;
 
 //for the volatile data storage
-var todos=[];
+//var todos=[];
 
 //id increment
 var next_id=1;
 
 //use the bodyparser 
 app.use(bodyParser.json());
+
+
+//login 
+app.post('/user/login',function(req,res)
+{
+	//Pick data which are needed avoid the extra data
+	var body=_.pick(req.body,'email','password');
+
+	db.user.authenticate(body).then(function(user)
+	{
+		res.json(user.toPublicJSON());
+	},function(e)
+	{
+		res.status(401).send();
+	});
+
+	
+});
+
+
+//create the new user
+app.post('/createuser',function(req,res)
+{
+	//Pick data which are needed avoid the extra data
+	var body=_.pick(req.body,'email','password');
+
+	//trim data avoid spaces
+	body.email=body.email.trim();
+	body.password=body.password.trim();
+
+	//push the data into database
+	db.user.create(
+	{
+		email:body.email,
+		password:body.password
+	}).then(function(user)
+	{
+		console.log('user created !!!');
+		console.log(user.toJSON());		
+		console.log(user.toPublicJSON());		
+		res.json(user.toPublicJSON());	
+	}).catch(function(e)
+	{
+		console.log(e);
+		return res.status(400).json(e);		
+	});
+});
+
 
 //Method : post
 //create the new todo 
@@ -27,15 +75,6 @@ app.post('/createtodos',function(req,res)
 	//trim data avoid spaces
 	body.description=body.description.trim();
 	
-	//check data 
-	//complete -  should be boolean
-	//description - should be string
-	//length should be greater than 0
-	if( !_.isBoolean(body.completed) || !_.isString(body.description) || body.description.trim().length===0)
-	{
-		//show the error message
-		return res.status(400).json({"error":"Something went wrong"});
-	}	
 	
 	//push the data into database
 	db.todo.create(
@@ -50,10 +89,19 @@ app.post('/createtodos',function(req,res)
 	}).catch(function(e)
 	{
 		console.log(e);
-		return res.status(400).json({"error":"Something went wrong"});		
+		return res.status(400).json(e);		
 	});
 
 	//push the data into voliatile storage that is object
+	//check data 
+	//complete -  should be boolean
+	//description - should be string
+	//length should be greater than 0
+	// if( !_.isBoolean(body.completed) || !_.isString(body.description) || body.description.trim().length===0)
+	// {
+	// 	//show the error message
+	// 	return res.status(400).json({"error":"Something went wrong"});
+	// }	
 	//body.id=next_id;
 	//next_id++;	
 	//todos.push(body);
@@ -109,6 +157,36 @@ app.delete('/delete_todo_by_id/:id',function(req,res)
 		res.status(500).json({"error":"server error"});
 	});
 });	
+
+//delete user by id
+app.delete('/delete_user_by_id/:id',function(req,res)
+{
+	var user_id=parseInt(req.params.id);
+	
+	//for database
+	db.user.destroy(
+	{
+		where:
+		{
+			id:user_id
+		}
+	}).then(function(row_deleted)
+	{
+		if(row_deleted===0)
+		{
+			res.status(404).json({"error":"No user with id "+user_id});		
+		}
+		else
+		{
+			console.log("user deleted of id  "+user_id+"!!!! ");
+			res.status(200).json({"Status":"Row deleted"});
+		}
+	},function()
+	{
+		res.status(500).json({"error":"server error"});
+	});
+});	
+
 
 //update the todo
 app.put('/update_todo_by_id/:id',function(req,res)
@@ -212,6 +290,64 @@ app.put('/update_todo_by_id/:id',function(req,res)
 	
 });
 
+//update the user
+app.put('/update_user_by_id/:id',function(req,res)
+{
+	var user_id=parseInt(req.params.id);
+	//from database
+	//pick two column only data validation
+	var body=_.pick(req.body,'email','password');
+	var validateattribute={};
+				
+	if(body.hasOwnProperty('email')   && _.isString(body.email))
+	{						
+		validateattribute.email=body.email;
+	}
+	else if(body.hasOwnProperty('email'))
+	{
+		return res.status(400).json({"error":"The email type is not string"});
+	}
+
+
+	if(body.hasOwnProperty('password')  && _.isString(body.password) && body.password.trim().length>7)
+	{
+		validateattribute.password=body.password;
+	}
+	else if(body.hasOwnProperty('password') && _.isString(body.password) && body.password.trim().length<8)
+	{
+		return res.status(400).json({"error":"The password string len is less than 8"});	
+	}
+	else if(body.hasOwnProperty('password'))
+	{
+		return res.status(400).json({"error":"The password type is not string"});
+	}
+	
+
+	db.user.findById(user_id).then(function(user)
+	{
+		console.log('Display user by id '+user_id+'!!');
+		if(user)
+		{
+			user.update(validateattribute).then(function(user)
+			{
+				console.log("User updated !!!! ");
+				console.log(user.toJSON());
+				res.json(user.toJSON());
+			}).catch(function(e)
+			{
+				console.log(e);
+				res.status(500).json({"error":"Server error"});
+			});			
+		}
+		else
+		{
+			res.status(404).json({"error":"No user with this id "+user_id});
+		}			
+	},function(){
+		res.status(500).send();
+	})
+	
+});
 
 
 
@@ -241,6 +377,35 @@ app.get('/todos',function(req,res)
 		else
 		{
 			res.status(404).json({"error":"No todos"});
+		}
+	}).catch(function(e)
+	{
+		console.log(e);
+		res.status(500).json({"error":"Server error"});
+	});
+});
+
+
+//get all user
+app.get('/users',function(req,res)
+{
+	var res_user=[];
+	//get all data from database
+	db.user.findAll({}).then(function(user)
+	{
+		console.log('Display all user');
+		if(user.length>0)
+		{		
+			user.forEach(function(user)
+			{
+				console.log(user.toJSON());				
+				res_user.push(user);
+			})
+			res.json(res_user);					
+		}
+		else
+		{
+			res.status(404).json({"error":"No user"});
 		}
 	}).catch(function(e)
 	{
@@ -312,6 +477,46 @@ app.get('/todos_by_id/:id',function(req,res)
 	}
 	*/
 });
+//get individual user/:id
+app.get('/user_by_id/:id',function(req,res)
+{
+	var user_id=parseInt(req.params.id);
+	var matcheduser=[];
+	
+	//using underscore library
+	//from local object
+	//var matchedtodo=_.findWhere(todos,{id:todo_id})
+	
+	//from database
+	db.user.findAll
+	({
+		where:
+		{
+			id:user_id			
+		}
+	}).then(function(user)
+	{
+		console.log('Display user by id '+user_id+'!!');
+		if(user.length>0)
+		{
+			user.forEach(function(user)
+			{
+				console.log(user.toJSON());				
+				matcheduser.push(user);
+			})	
+			res.json(matcheduser);
+		}
+		else
+		{
+			res.status(404).json({"error":"No user with this id "+user_id});
+		}			
+	}).catch(function(e)
+	{
+		console.log(e);
+		res.status(500).json({"error":"Server error"});
+	});	
+});
+
 
 //search in the description
 app.get('/todos_search_description',function(req,res)
@@ -509,6 +714,7 @@ app.get('/',function(req,res)
 
 db.seq_obj.sync(
 {
+	//force:true
 }).then(function()
 {
 	app.listen(PORT,function()
