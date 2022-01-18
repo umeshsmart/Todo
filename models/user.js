@@ -1,5 +1,7 @@
 var bcrypt=require('bcrypt');
 var _=require('underscore');
+var cryptojs=require('crypto-js');
+var jwt=require('jsonwebtoken');
 module.exports=function(seq_obj,Sequelize)
 {
 	var user = seq_obj.define('user',{
@@ -64,6 +66,29 @@ module.exports=function(seq_obj,Sequelize)
 			{
 				var json = this.toJSON();
 				return _.pick(json,'id','email','createdAt','updatedAt');
+			},
+			generateToken:function(type)
+			{
+				if ( !_.isString(type))
+				{
+					return undefined;
+				}
+				try 
+				{
+					//generate new token
+					var stringData=JSON.stringify({id:this.get('id'),type:type});
+					var encrptedData = cryptojs.AES.encrypt(stringData,'lock123@').toString();
+					
+					var token=jwt.sign({
+						token:encrptedData
+					},'qwertyuiop');
+					return token;
+				}	
+				catch(e)
+				{
+					console.error(e);
+					return undefined;
+				}
 			}
 		},
 		classMethods:
@@ -97,6 +122,7 @@ module.exports=function(seq_obj,Sequelize)
 				});
 			}
 		}
+
 	});
 	return user;
 }
