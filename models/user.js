@@ -120,6 +120,40 @@ module.exports=function(seq_obj,Sequelize)
 						return reject();
 					})
 				});
+			},
+			findByToken: function(token)
+			{
+				return new Promise(function(resolve,reject)
+				{
+					//decrypt the token
+					try
+					{
+						var decodedJWT=jwt.verify(token,'qwertyuiop');
+						var bytes=cryptojs.AES.decrypt(decodedJWT.token,'lock123@');
+						var tokenData=JSON.parse(bytes.toString(cryptojs.enc.Utf8));
+
+						user.findById(tokenData.id).then(function(user)
+						{
+							if(user)
+							{
+								resolve(user);
+							}
+							else
+							{
+								reject();
+							}
+						},function(e)
+						{
+							reject();
+						});
+						
+					}
+					catch(e)
+					{
+						console.log("error : "+e);
+						reject();
+					}
+				});
 			}
 		}
 

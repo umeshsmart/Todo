@@ -5,6 +5,7 @@ var bodyParser =require('body-parser');
 var _ =require('underscore');
 var db=require('./db.js');
 var bcrypt=require('bcrypt');
+var middleware=require('./middleware.js')(db);
 //set the port number
 var PORT=process.env.PORT || 3000;
 
@@ -73,7 +74,7 @@ app.post('/createuser',function(req,res)
 
 //Method : post
 //create the new todo 
-app.post('/createtodos',function(req,res)
+app.post('/createtodos',middleware.requireAuthentication,function(req,res)
 {
 	//Pick data which are needed avoid the extra data
 	var body=_.pick(req.body,'description','completed');
@@ -122,7 +123,7 @@ app.post('/createtodos',function(req,res)
 
 
 //delete by id
-app.delete('/delete_todo_by_id/:id',function(req,res)
+app.delete('/delete_todo_by_id/:id',middleware.requireAuthentication,function(req,res)
 {
 	var todo_id=parseInt(req.params.id);
 	
@@ -195,7 +196,7 @@ app.delete('/delete_user_by_id/:id',function(req,res)
 
 
 //update the todo
-app.put('/update_todo_by_id/:id',function(req,res)
+app.put('/update_todo_by_id/:id',middleware.requireAuthentication,function(req,res)
 {
 	var todo_id=parseInt(req.params.id);
 	
@@ -361,7 +362,7 @@ app.put('/update_user_by_id/:id',function(req,res)
 
 
 //get all todos
-app.get('/todos',function(req,res)
+app.get('/todos',middleware.requireAuthentication,function(req,res)
 {
 	//send all data form object
 	//res.json(todos);
@@ -421,7 +422,7 @@ app.get('/users',function(req,res)
 });
 
 //get individual todos/:id
-app.get('/todos_by_id/:id',function(req,res)
+app.get('/todos_by_id/:id',middleware.requireAuthentication,function(req,res)
 {
 	var todo_id=parseInt(req.params.id);
 	var matchedtodo=[];
@@ -525,7 +526,7 @@ app.get('/user_by_id/:id',function(req,res)
 
 
 //search in the description
-app.get('/todos_search_description',function(req,res)
+app.get('/todos_search_description',middleware.requireAuthentication,function(req,res)
 {
 
 	var query_params=req.query;
@@ -590,7 +591,7 @@ app.get('/todos_search_description',function(req,res)
 
 
 //get completed todos
-app.get('/todos_by_status',function(req,res)
+app.get('/todos_by_status',middleware.requireAuthentication,function(req,res)
 {
 	var query_params=req.query;	
 
